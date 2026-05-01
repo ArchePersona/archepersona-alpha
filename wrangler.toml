@@ -1,0 +1,19 @@
+name = "archepersona"
+main = "src/index.js"
+compatibility_date = "2024-12-19"
+
+[env.production]
+name = "archepersona-production"
+routes = [
+  { pattern = "archepersona.yourname.workers.dev/*", zone_name = "example.com" }
+]
+
+[vars]
+ANTHROPIC_MODEL = "claude-opus-4-6"
+
+[[env.production.vars]]
+ANTHROPIC_MODEL = "claude-opus-4-6"
+
+[env.development]
+name = "archepersona-dev"
+vars = { ANTHROPIC_MODEL = "claude-opus-4-6" }
