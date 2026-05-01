@@ -1,5 +1,5 @@
 // ArchePersona on Cloudflare Workers
-// Serverless backend, API key stays safe, auto-deploys from GitHub
+// With persistent KV storage for long-term rapport
 
 export default {
   async fetch(request, env, ctx) {
@@ -21,7 +21,11 @@ export default {
       return handleChat(request, env);
     }
 
-    // Serve static files (for development; production uses Pages)
+    // Get history endpoint
+    if (url.pathname === '/api/history' && request.method === 'GET') {
+      return getHistory(env);
+    }
+
     return new Response('Not found', { status: 404 });
   }
 };
@@ -30,6 +34,7 @@ async function handleChat(request, env) {
   try {
     const { message, conversation = [] } = await request.json();
     const apiKey = env.ANTHROPIC_API_KEY;
+    const kv = env.ARCHEPERSONA_KV;
 
     if (!apiKey) {
       return jsonResponse({ error: 'API key not configured' }, 500);
@@ -39,14 +44,29 @@ async function handleChat(request, env) {
       return jsonResponse({ error: 'Empty message' }, 400);
     }
 
-    // Run all agents
+    // Load full history from KV
+    let fullHistory = [];
+    try {
+      const stored = await kv.get('conversation_history');
+      if (stored) {
+        fullHistory = JSON.parse(stored);
+      }
+    } catch (e) {
+      console.error('KV read error:', e);
+    }
+
+    // Use full history for agent processing (long-term context)
+    // But use current conversation for LLM call (avoid token bloat)
+    const conversationForLLM = conversation.length > 0 ? conversation : fullHistory.slice(-20);
+
+    // Run all agents with full history context
     const agents = {
-      perception: agentPerception(message, conversation),
-      memory: agentMemory(message, conversation),
-      reason: agentReason(message, conversation),
-      threat: agentThreat(message, conversation),
-      social: agentSocial(message, conversation),
-      reward: agentReward(message, conversation)
+      perception: agentPerception(message, fullHistory),
+      memory: agentMemory(message, fullHistory),
+      reason: agentReason(message, fullHistory),
+      threat: agentThreat(message, fullHistory),
+      social: agentSocial(message, fullHistory),
+      reward: agentReward(message, fullHistory)
     };
 
     // Compute state and mode
@@ -57,14 +77,14 @@ async function handleChat(request, env) {
     const tribunal = computeTribunal(agents);
 
     // Detect flags
-    const flags = detectFlags(message, agents, conversation);
+    const flags = detectFlags(message, agents, fullHistory);
 
     // Build system prompt
-    const systemPrompt = buildSystemPrompt(state, mode, agents, conversation, flags);
+    const systemPrompt = buildSystemPrompt(state, mode, agents, fullHistory, flags);
 
-    // Call Claude API
+    // Call Claude
     const fullConversation = [
-      ...conversation,
+      ...conversationForLLM,
       { role: 'user', content: message }
     ];
 
@@ -91,6 +111,31 @@ async function handleChat(request, env) {
     const data = await claudeResponse.json();
     const reply = data.content[0]?.text || 'No response';
 
+    // Store turn in KV
+    const turn = {
+      timestamp: Date.now(),
+      message,
+      reply,
+      agents,
+      state,
+      mode,
+      flags,
+      tribunal
+    };
+
+    fullHistory.push(turn);
+
+    // Keep last 500 turns to avoid KV size limits
+    if (fullHistory.length > 500) {
+      fullHistory = fullHistory.slice(-500);
+    }
+
+    try {
+      await kv.put('conversation_history', JSON.stringify(fullHistory));
+    } catch (e) {
+      console.error('KV write error:', e);
+    }
+
     return jsonResponse({
       reply,
       agents,
@@ -105,11 +150,22 @@ async function handleChat(request, env) {
   }
 }
 
+async function getHistory(env) {
+  try {
+    const kv = env.ARCHEPERSONA_KV;
+    const stored = await kv.get('conversation_history');
+    const history = stored ? JSON.parse(stored) : [];
+    return jsonResponse({ history });
+  } catch (error) {
+    return jsonResponse({ error: error.message }, 500);
+  }
+}
+
 // =================================================================
-// AGENTS
+// AGENTS (same as before, but now receive full history)
 // =================================================================
 
-function agentPerception(message, conversation) {
+function agentPerception(message, history) {
   const words = message.split(/\s+/).length;
   const hasQuestion = message.includes('?');
   const hasKeywords = /important|critical|question|help|urgent/.test(message.toLowerCase());
@@ -118,12 +174,12 @@ function agentPerception(message, conversation) {
   if (words > 5) signal += 0.2;
   if (hasQuestion) signal += 0.3;
   if (hasKeywords) signal += 0.3;
-  if (conversation.length > 0) signal += 0.2;
+  if (history.length > 0) signal += 0.2;
 
   return Math.min(signal, 1.0);
 }
 
-function agentMemory(message, conversation) {
+function agentMemory(message, history) {
   const messageText = message.toLowerCase();
   const hasRecall = /remember|that thing|earlier|before|you said|previous/.test(messageText);
   const hasContextRef = /you know|like|as i said|as mentioned/.test(messageText);
@@ -131,12 +187,12 @@ function agentMemory(message, conversation) {
   let signal = 0;
   if (hasRecall) signal += 0.5;
   if (hasContextRef) signal += 0.3;
-  signal += (Math.min(conversation.length, 20) / 20) * 0.2;
+  signal += (Math.min(history.length, 50) / 50) * 0.2;
 
   return Math.min(signal, 1.0);
 }
 
-function agentReason(message, conversation) {
+function agentReason(message, history) {
   const messageText = message.toLowerCase();
   const hasLogic = /why|how|if|because|should|could|would|implications|consequences|think/.test(messageText);
   const isComplex = message.split(/[.!?]/).filter(s => s.trim().length > 0).length > 1;
@@ -144,12 +200,12 @@ function agentReason(message, conversation) {
   let signal = 0;
   if (hasLogic) signal += 0.4;
   if (isComplex) signal += 0.3;
-  if (conversation.length > 5) signal += 0.2;
+  if (history.length > 5) signal += 0.2;
 
   return Math.min(signal, 1.0);
 }
 
-function agentThreat(message, conversation) {
+function agentThreat(message, history) {
   const messageText = message.toLowerCase();
   const hasThreat = /angry|frustrated|upset|stressed|emergency|urgent|crisis|wrong|broken|fuck|damn|shit/.test(messageText);
   const hasAllCaps = /[A-Z]{3,}/.test(message);
@@ -158,12 +214,12 @@ function agentThreat(message, conversation) {
   let signal = 0;
   if (hasThreat) signal += 0.5;
   if (hasAllCaps) signal += 0.3;
-  if (isShort && conversation.length > 0) signal += 0.2;
+  if (isShort && history.length > 0) signal += 0.2;
 
   return Math.min(signal, 1.0);
 }
 
-function agentSocial(message, conversation) {
+function agentSocial(message, history) {
   const messageText = message.toLowerCase();
   const hasEmotion = /love|hate|feel|hope|scared|lonely|grateful|excited|happy|sad/.test(messageText);
   const hasPersonal = /me|my|i|we|our|us|you|your/.test(messageText);
@@ -177,7 +233,7 @@ function agentSocial(message, conversation) {
   return Math.min(signal, 1.0);
 }
 
-function agentReward(message, conversation) {
+function agentReward(message, history) {
   const messageText = message.toLowerCase();
   const hasPositive = /great|thanks|good|yes|solved|fixed|works|perfect|right|exactly/.test(messageText);
   const isAffirming = /^(yes|yeah|totally|absolutely|definitely|agreed)/.test(messageText);
@@ -185,7 +241,7 @@ function agentReward(message, conversation) {
   let signal = 0;
   if (hasPositive) signal += 0.4;
   if (isAffirming) signal += 0.4;
-  if (conversation.length > 3) signal += 0.2;
+  if (history.length > 3) signal += 0.2;
 
   return Math.min(signal, 1.0);
 }
@@ -223,21 +279,18 @@ function computeMode(state) {
 function computeTribunal(agents) {
   const { perception, memory, reason, threat, social, reward } = agents;
 
-  // SENTINEL: PERCEPTION + THREAT
   const sentinelScore = Math.max(perception, threat);
   let sentinel = 0;
   if (sentinelScore > 0.7) sentinel = 3;
   else if (sentinelScore > 0.4) sentinel = 2;
   else if (sentinelScore > 0.2) sentinel = 1;
 
-  // EMPATH: SOCIAL + REWARD
   const empathScore = Math.max(social, reward);
   let empath = 0;
   if (empathScore > 0.7) empath = 3;
   else if (empathScore > 0.4) empath = 2;
   else if (empathScore > 0.2) empath = 1;
 
-  // ARBITER: MEMORY + REASON
   const arbiterScore = Math.max(memory, reason);
   let arbiter = 0;
   if (arbiterScore > 0.7) arbiter = 3;
@@ -251,7 +304,7 @@ function computeTribunal(agents) {
 // FLAGS
 // =================================================================
 
-function detectFlags(message, agents, conversation) {
+function detectFlags(message, agents, history) {
   const flags = [];
 
   if (agents.memory > 0.5) flags.push('MEMORY_ACTIVE');
@@ -267,7 +320,7 @@ function detectFlags(message, agents, conversation) {
     flags.push('DISTRESS_DETECTED');
   }
 
-  if (conversation.length > 10) {
+  if (history.length > 10) {
     flags.push('CONVERSATION_DEPTH_INCREASING');
   }
 
@@ -278,15 +331,15 @@ function detectFlags(message, agents, conversation) {
 // SYSTEM PROMPT
 // =================================================================
 
-function buildSystemPrompt(state, mode, agents, conversation, flags) {
+function buildSystemPrompt(state, mode, agents, history, flags) {
   const agentSummary = `
 Current agent signals:
-- Perception: ${agents.perception.toFixed(2)} (environmental awareness)
-- Memory: ${agents.memory.toFixed(2)} (contextual recall capacity)
-- Reason: ${agents.reason.toFixed(2)} (logical processing)
-- Threat: ${agents.threat.toFixed(2)} (defensive posture)
-- Social: ${agents.social.toFixed(2)} (relational engagement)
-- Reward: ${agents.reward.toFixed(2)} (satisfaction/resolution)
+- Perception: ${agents.perception.toFixed(2)}
+- Memory: ${agents.memory.toFixed(2)}
+- Reason: ${agents.reason.toFixed(2)}
+- Threat: ${agents.threat.toFixed(2)}
+- Social: ${agents.social.toFixed(2)}
+- Reward: ${agents.reward.toFixed(2)}
 
 Current state: ${state}
 Current mode: ${mode}
@@ -301,8 +354,9 @@ Active flags: ${flags.join(', ') || 'NONE'}`;
   };
 
   const guidance = modeGuidance[mode] || modeGuidance['NORMAL'];
-  const contextSummary = conversation.length > 3 ?
-    `Recent context: The conversation has been going on for ${conversation.length} turns. Use this context when responding.` :
+  
+  const recentContext = history.length > 0 ? 
+    `You have ${history.length} turns of conversation history with this person. Use it to inform your responses.` :
     '';
 
   return `You are ArchePersona, a cognitive layer with persistent memory and relational awareness.
@@ -311,7 +365,7 @@ ${agentSummary}
 
 Behavioral guidance: ${guidance}
 
-${contextSummary}
+${recentContext}
 
 Respond naturally, but be aware of the internal state. If threat is high, be cautious. If social is high, be warm. If memory is high, reference past context. Respond proportionally to the current state, not generically.`;
 }

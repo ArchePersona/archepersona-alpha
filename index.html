@@ -64,20 +64,48 @@
       font-family: inherit;
     }
 
-    /* DASHBOARD — HIDDEN BY DEFAULT, SLIDES DOWN */
-    .dashboard {
-      display: none;
-      overflow-y: auto;
-      max-height: 25vh;
-      padding: 8px;
-      background: rgba(6, 29, 39, 0.8);
+    /* DASHBOARD — COLLAPSIBLE */
+    .dashboard-wrapper {
+      display: flex;
+      flex-direction: column;
+      height: 30vh;
       border-bottom: 1px solid var(--line);
+      background: rgba(6, 29, 39, 0.8);
+      position: relative;
+    }
+
+    .dashboard {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
       gap: 4px;
     }
 
-    .dashboard.open {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
+    .dashboard.closed {
+      display: none;
+    }
+
+    /* DRAGGABLE BORDER */
+    .dashboard-resize {
+      height: 6px;
+      background: rgba(184, 148, 10, 0.2);
+      cursor: row-resize;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+    }
+
+    .dashboard-resize::before {
+      content: '';
+      width: 40px;
+      height: 3px;
+      background: rgba(184, 148, 10, 0.5);
+      border-radius: 2px;
     }
 
     .agent-card, .tribunal-card {
@@ -115,7 +143,6 @@
       transition: width 0.2s ease;
     }
 
-    /* TRIBUNAL CARDS — SHOW ALL THREE CONSENSUS VALUES */
     .tribunal-row {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
@@ -315,7 +342,6 @@
       font-size: 10px;
     }
 
-    /* SCROLLBAR */
     ::-webkit-scrollbar {
       width: 4px;
     }
@@ -328,36 +354,6 @@
       background: rgba(184, 148, 10, 0.3);
       border-radius: 2px;
     }
-
-    @media (orientation: landscape) {
-      .container {
-        flex-direction: row;
-      }
-
-      .header {
-        border-bottom: none;
-        border-right: 1px solid var(--line);
-        flex-direction: column;
-        width: 120px;
-        padding: 8px;
-      }
-
-      .dashboard {
-        display: grid !important;
-        max-height: none;
-        flex: 1;
-        border-bottom: none;
-        border-right: 1px solid var(--line);
-        grid-template-columns: 1fr;
-        gap: 6px;
-        padding: 8px;
-        overflow-y: auto;
-      }
-
-      .chat-container {
-        flex: 2;
-      }
-    }
   </style>
 </head>
 <body>
@@ -367,75 +363,76 @@
       <button class="dashboard-toggle" onclick="toggleDashboard()">Data</button>
     </div>
 
-    <div class="dashboard" id="dashboard">
-      <!-- AGENTS -->
-      <div class="agent-card">
-        <h3>Perception</h3>
-        <div class="signal-value" id="perception-value">0.0</div>
-        <div class="signal-bar"><div class="signal-fill" id="perception-fill"></div></div>
-      </div>
+    <div class="dashboard-wrapper" id="dashboardWrapper">
+      <div class="dashboard" id="dashboard">
+        <!-- AGENTS -->
+        <div class="agent-card">
+          <h3>Perception</h3>
+          <div class="signal-value" id="perception-value">0.0</div>
+          <div class="signal-bar"><div class="signal-fill" id="perception-fill"></div></div>
+        </div>
 
-      <div class="agent-card">
-        <h3>Memory</h3>
-        <div class="signal-value" id="memory-value">0.0</div>
-        <div class="signal-bar"><div class="signal-fill" id="memory-fill"></div></div>
-      </div>
+        <div class="agent-card">
+          <h3>Memory</h3>
+          <div class="signal-value" id="memory-value">0.0</div>
+          <div class="signal-bar"><div class="signal-fill" id="memory-fill"></div></div>
+        </div>
 
-      <div class="agent-card">
-        <h3>Reason</h3>
-        <div class="signal-value" id="reason-value">0.0</div>
-        <div class="signal-bar"><div class="signal-fill" id="reason-fill"></div></div>
-      </div>
+        <div class="agent-card">
+          <h3>Reason</h3>
+          <div class="signal-value" id="reason-value">0.0</div>
+          <div class="signal-bar"><div class="signal-fill" id="reason-fill"></div></div>
+        </div>
 
-      <div class="agent-card">
-        <h3>Threat</h3>
-        <div class="signal-value" id="threat-value">0.0</div>
-        <div class="signal-bar"><div class="signal-fill" id="threat-fill"></div></div>
-      </div>
+        <div class="agent-card">
+          <h3>Threat</h3>
+          <div class="signal-value" id="threat-value">0.0</div>
+          <div class="signal-bar"><div class="signal-fill" id="threat-fill"></div></div>
+        </div>
 
-      <div class="agent-card">
-        <h3>Social</h3>
-        <div class="signal-value" id="social-value">0.0</div>
-        <div class="signal-bar"><div class="signal-fill" id="social-fill"></div></div>
-      </div>
+        <div class="agent-card">
+          <h3>Social</h3>
+          <div class="signal-value" id="social-value">0.0</div>
+          <div class="signal-bar"><div class="signal-fill" id="social-fill"></div></div>
+        </div>
 
-      <div class="agent-card">
-        <h3>Reward</h3>
-        <div class="signal-value" id="reward-value">0.0</div>
-        <div class="signal-bar"><div class="signal-fill" id="reward-fill"></div></div>
-      </div>
+        <div class="agent-card">
+          <h3>Reward</h3>
+          <div class="signal-value" id="reward-value">0.0</div>
+          <div class="signal-bar"><div class="signal-fill" id="reward-fill"></div></div>
+        </div>
 
-      <!-- TRIBUNAL -->
-      <div class="tribunal-card" style="grid-column: 1 / -1;">
-        <h3>Tribunal Consensus</h3>
-        <div class="tribunal-row">
-          <div>
-            <div style="font-size: 10px; color: var(--dim);">SENTINEL</div>
-            <div class="tribunal-value" id="sentinel-value">0</div>
-          </div>
-          <div>
-            <div style="font-size: 10px; color: var(--dim);">EMPATH</div>
-            <div class="tribunal-value" id="empath-value">0</div>
-          </div>
-          <div>
-            <div style="font-size: 10px; color: var(--dim);">ARBITER</div>
-            <div class="tribunal-value" id="arbiter-value">0</div>
+        <div class="tribunal-card" style="grid-column: 1 / -1;">
+          <h3>Tribunal</h3>
+          <div class="tribunal-row">
+            <div>
+              <div style="font-size: 9px; color: var(--dim);">SENT</div>
+              <div class="tribunal-value" id="sentinel-value">0</div>
+            </div>
+            <div>
+              <div style="font-size: 9px; color: var(--dim);">EMP</div>
+              <div class="tribunal-value" id="empath-value">0</div>
+            </div>
+            <div>
+              <div style="font-size: 9px; color: var(--dim);">ARB</div>
+              <div class="tribunal-value" id="arbiter-value">0</div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- STATE & MODE -->
-      <div class="agent-card">
-        <h3>State</h3>
-        <div class="signal-value" id="state-value" style="font-size: 14px;">FOCUSED</div>
-      </div>
+        <div class="agent-card">
+          <h3>State</h3>
+          <div class="signal-value" id="state-value" style="font-size: 12px;">FOCUSED</div>
+        </div>
 
-      <div class="agent-card">
-        <h3>Mode</h3>
-        <div class="signal-value" id="mode-value" style="font-size: 14px;">NORMAL</div>
-      </div>
+        <div class="agent-card">
+          <h3>Mode</h3>
+          <div class="signal-value" id="mode-value" style="font-size: 12px;">NORMAL</div>
+        </div>
 
-      <button class="flag-log-btn" onclick="openFlagLog()">Flag Log</button>
+        <button class="flag-log-btn" onclick="openFlagLog()">Flags</button>
+      </div>
+      <div class="dashboard-resize" id="dashboardResize"></div>
     </div>
 
     <div class="chat-container">
@@ -463,14 +460,58 @@
     const userInput = document.getElementById('userInput');
     const sendBtn = document.getElementById('sendBtn');
     const dashboard = document.getElementById('dashboard');
+    const dashboardWrapper = document.getElementById('dashboardWrapper');
+    const dashboardResize = document.getElementById('dashboardResize');
     const flagModal = document.getElementById('flagModal');
     const flagList = document.getElementById('flagList');
 
     let conversation = [];
     let flagLog = [];
+    let isDragging = false;
+
+    // Load history on startup
+    async function loadHistory() {
+      try {
+        const response = await fetch('/api/history');
+        const data = await response.json();
+        if (data.history && data.history.length > 0) {
+          // Load last 20 turns for context
+          const recentHistory = data.history.slice(-20);
+          conversation = recentHistory.map(turn => [
+            { role: 'user', content: turn.message },
+            { role: 'assistant', content: turn.reply }
+          ]).flat();
+          addMessage('agent', `Loaded ${data.history.length} turns of history.`);
+        }
+      } catch (e) {
+        console.log('No history available yet');
+      }
+    }
+
+    loadHistory();
+
+    // Draggable border
+    dashboardResize.addEventListener('mousedown', () => { isDragging = true; });
+    dashboardResize.addEventListener('touchstart', () => { isDragging = true; });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      const newHeight = Math.max(100, Math.min(e.clientY, window.innerHeight - 200));
+      dashboardWrapper.style.height = newHeight + 'px';
+    });
+
+    document.addEventListener('touchmove', (e) => {
+      if (!isDragging) return;
+      const touch = e.touches[0];
+      const newHeight = Math.max(100, Math.min(touch.clientY, window.innerHeight - 200));
+      dashboardWrapper.style.height = newHeight + 'px';
+    });
+
+    document.addEventListener('mouseup', () => { isDragging = false; });
+    document.addEventListener('touchend', () => { isDragging = false; });
 
     function toggleDashboard() {
-      dashboard.classList.toggle('open');
+      dashboard.classList.toggle('closed');
     }
 
     function openFlagLog() {
@@ -568,13 +609,11 @@
       }
     });
 
-    // Auto-resize textarea
     userInput.addEventListener('input', () => {
       userInput.style.height = '40px';
       userInput.style.height = Math.min(userInput.scrollHeight, 100) + 'px';
     });
 
-    // Close modal on background click
     flagModal.addEventListener('click', (e) => {
       if (e.target === flagModal) closeFlagLog();
     });
