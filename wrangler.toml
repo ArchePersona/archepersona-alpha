@@ -17,3 +17,7 @@ ANTHROPIC_MODEL = "claude-opus-4-6"
 [env.development]
 name = "archepersona-dev"
 vars = { ANTHROPIC_MODEL = "claude-opus-4-6" }
+
+[[kv_namespaces]]
+binding = "ARCHEPERSONA"
+id = "978aee52f3aa43ebbc2917fce00a840d"
