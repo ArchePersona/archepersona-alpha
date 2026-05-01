@@ -68,44 +68,44 @@
     .dashboard {
       display: none;
       overflow-y: auto;
-      max-height: 40vh;
-      padding: 12px;
+      max-height: 25vh;
+      padding: 8px;
       background: rgba(6, 29, 39, 0.8);
       border-bottom: 1px solid var(--line);
-      gap: 8px;
+      gap: 4px;
     }
 
     .dashboard.open {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr;
     }
 
     .agent-card, .tribunal-card {
       border: 1px solid var(--line);
-      border-radius: 6px;
-      padding: 10px;
+      border-radius: 4px;
+      padding: 6px;
       background: rgba(255, 255, 255, 0.03);
     }
 
     .agent-card h3, .tribunal-card h3 {
-      margin: 0 0 6px;
-      font-size: 10px;
+      margin: 0 0 3px;
+      font-size: 8px;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.06em;
       color: var(--gold);
     }
 
     .signal-value {
-      font-size: 16px;
+      font-size: 12px;
       font-weight: 600;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
 
     .signal-bar {
       width: 100%;
-      height: 4px;
+      height: 3px;
       background: rgba(255, 255, 255, 0.1);
-      border-radius: 2px;
+      border-radius: 1px;
       overflow: hidden;
     }
 
@@ -119,29 +119,31 @@
     .tribunal-row {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
-      gap: 4px;
-      font-size: 12px;
+      gap: 2px;
+      font-size: 10px;
       font-weight: 600;
       text-align: center;
     }
 
     .tribunal-value {
-      padding: 4px;
+      padding: 2px;
       background: rgba(255, 255, 255, 0.05);
-      border-radius: 3px;
+      border-radius: 2px;
+      font-size: 10px;
     }
 
     .flag-log-btn {
       background: rgba(184, 148, 10, 0.2);
       border: 1px solid var(--gold);
       color: var(--gold);
-      padding: 6px 10px;
-      border-radius: 4px;
-      font-size: 10px;
+      padding: 4px 8px;
+      border-radius: 3px;
+      font-size: 9px;
       cursor: pointer;
       font-family: inherit;
-      margin-top: 8px;
+      margin-top: 4px;
       width: 100%;
+      grid-column: 1 / -1;
     }
 
     /* CHAT — MAIN FOCUS */
@@ -150,6 +152,7 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      padding-bottom: 60px;
     }
 
     .chat-window {
@@ -167,7 +170,7 @@
       border-radius: 8px;
       font-size: 14px;
       line-height: 1.4;
-      max-width: 90%;
+      max-width: 85%;
     }
 
     .bubble.user {
@@ -179,15 +182,23 @@
     .bubble.agent {
       background: rgba(184, 148, 10, 0.12);
       border: 1px solid rgba(184, 148, 10, 0.28);
+      width: 100%;
+      max-width: 100%;
+      margin-left: 0;
     }
 
     /* INPUT AREA */
     .input-area {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
       display: flex;
       gap: 8px;
       padding: 12px;
       border-top: 1px solid var(--line);
-      background: rgba(6, 29, 39, 0.9);
+      background: rgba(6, 29, 39, 0.95);
+      z-index: 100;
     }
 
     textarea {
