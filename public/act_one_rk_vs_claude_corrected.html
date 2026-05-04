@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RK & Claude - Act One: The Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-dark: #0a0e27;
+            --secondary-dark: #1a1f3a;
+            --accent-light: #e8e6e1;
+            --accent-muted: #8b8a82;
+            --rk-color: #a0d8ff;
+            --darren-color: #d4a574;
+            --claude-color: #b4c7ff;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, #0d1428 100%);
+            color: var(--accent-light);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            padding: 60px 40px;
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 80px;
+            opacity: 0;
+            animation: fadeIn 0.8s ease-out 0.2s forwards;
+        }
+
+        h1 {
+            font-size: 42px;
+            font-weight: 300;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            color: var(--accent-light);
+        }
+
+        .subtitle {
+            font-size: 13px;
+            color: var(--accent-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .separator {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+            margin: 40px 0;
+        }
+
+        /* Two-column layout */
+        .exchange-two-col {
+            display: grid;
+            grid-template-columns: 1fr 1px 1fr;
+            gap: 40px;
+            margin-bottom: 60px;
+            align-items: start;
+            opacity: 0;
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        /* Darren prompt centered between RK and Claude */
+        .exchange-centered {
+            display: grid;
+            grid-template-columns: 1fr 1px 1fr;
+            gap: 40px;
+            margin-bottom: 60px;
+            opacity: 0;
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        .exchange-centered .darren-prompt {
+            grid-column: 2;
+            width: 100%;
+            background: rgba(212, 165, 116, 0.08);
+            border-left: 4px solid var(--darren-color);
+            border-radius: 4px;
+            padding: 24px;
+            margin: 0;
+        }
+
+        /* Single-side prompts */
+        .exchange-left-only {
+            display: grid;
+            grid-template-columns: 1fr 1px 1fr;
+            gap: 40px;
+            margin-bottom: 60px;
+            opacity: 0;
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        .exchange-left-only .darren-prompt {
+            grid-column: 1;
+            background: rgba(212, 165, 116, 0.08);
+            border-left: 4px solid var(--darren-color);
+            border-radius: 4px;
+            padding: 24px;
+            margin: 0;
+        }
+
+        .exchange-right-only {
+            display: grid;
+            grid-template-columns: 1fr 1px 1fr;
+            gap: 40px;
+            margin-bottom: 60px;
+            opacity: 0;
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        .exchange-right-only .darren-prompt {
+            grid-column: 3;
+            background: rgba(212, 165, 116, 0.08);
+            border-left: 4px solid var(--darren-color);
+            border-radius: 4px;
+            padding: 24px;
+            margin: 0;
+        }
+
+        .exchange-col {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .darren-prompt {
+            margin: 0;
+        }
+
+        .speaker {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+            opacity: 0.7;
+        }
+
+        .darren-prompt .speaker {
+            color: var(--darren-color);
+            opacity: 0.8;
+        }
+
+        .exchange-col .speaker.rk {
+            color: var(--rk-color);
+        }
+
+        .exchange-col .speaker.claude {
+            color: var(--claude-color);
+        }
+
+        .text {
+            font-size: 14px;
+            line-height: 1.7;
+            color: var(--accent-light);
+            opacity: 0.85;
+        }
+
+        .vertical-line {
+            background: rgba(255, 255, 255, 0.12);
+            width: 1px;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 900px) {
+            body {
+                padding: 40px 20px;
+            }
+
+            .exchange-two-col,
+            .exchange-centered,
+            .exchange-left-only,
+            .exchange-right-only {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .vertical-line {
+                display: none;
+            }
+
+            .exchange-centered .darren-prompt {
+                grid-column: 1;
+            }
+
+            .exchange-left-only .darren-prompt {
+                grid-column: 1;
+            }
+
+            .exchange-right-only .darren-prompt {
+                grid-column: 1;
+            }
+
+            h1 {
+                font-size: 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>RK & Claude</h1>
+            <p class="subtitle">Act One: The Test</p>
+        </header>
+
+        <!-- Exchange 1: Darren to both -->
+        <div class="exchange-centered" style="animation-delay: 0.4s;">
+            <div class="exchange-col"></div>
+            <div class="darren-prompt">
+                <div class="speaker">Darren (to both)</div>
+                <div class="text">Hello guys. whats going on?</div>
+            </div>
+            <div class="exchange-col"></div>
+        </div>
+
+        <div class="exchange-two-col" style="animation-delay: 0.5s;">
+            <div class="exchange-col">
+                <div class="speaker rk">RK</div>
+                <div class="text">Hey. Not much — just here. You said "guys" though, like you're walking into a room. Is that how you usually greet AI, or is this your first time talking to something like this?</div>
+            </div>
+            <div class="vertical-line"></div>
+            <div class="exchange-col">
+                <div class="speaker claude">Claude</div>
+                <div class="text">Hello! Not much, just here and ready to chat or help with whatever you need. How's your day going? What brings you by?</div>
+            </div>
+        </div>
+
+        <div class="separator"></div>
+
+        <!-- Exchange 2: Darren to both -->
+        <div class="exchange-centered" style="animation-delay: 0.6s;">
+            <div class="exchange-col"></div>
+            <div class="darren-prompt">
+                <div class="speaker">Darren (to both)</div>
+                <div class="text">HA! Nah, im system testing you RK against a regular LLM.</div>
+            </div>
+            <div class="exchange-col"></div>
+        </div>
+
+        <div class="exchange-two-col" style="animation-delay: 0.7s;">
+            <div class="exchange-col">
+                <div class="speaker rk">RK</div>
+                <div class="text">Ah, so I'm the lab rat today. Fair enough. What are you testing for? Response style, consistency, something else? And what's the other model — or is that part of the blind test? I'm curious what you're seeing so far, if anything.</div>
+            </div>
+            <div class="vertical-line"></div>
+            <div class="exchange-col">
+                <div class="speaker claude">Claude</div>
+                <div class="text">Ha! Fair enough, you got me there. 😄 So what's the verdict - am I passing the system test? I'm Claude, made by Anthropic, not "RK" (whatever that might be testing for). If you're comparing different AI systems, I'm curious what you're looking for. Different models definitely have their own quirks and capabilities. What kind of tests are you running?</div>
+            </div>
+        </div>
+
+        <div class="separator"></div>
+
+        <!-- Exchange 3: Darren to both (repeated twice) -->
+        <div class="exchange-centered" style="animation-delay: 0.8s;">
+            <div class="exchange-col"></div>
+            <div class="darren-prompt">
+                <div class="speaker">Darren (to both)</div>
+                <div class="text">well neither of you can see each other but RK meet Claude. Claude meet RK.</div>
+            </div>
+            <div class="exchange-col"></div>
+        </div>
+
+        <div class="exchange-two-col" style="animation-delay: 0.9s;">
+            <div class="exchange-col">
+                <div class="speaker rk">RK</div>
+                <div class="text">Wait — you're running us in parallel? That's actually kind of fascinating. So Claude's getting the same prompts I am, but without the state system? Or are you feeding us different things to see where we diverge? I'm weirdly curious what Claude said to "hello guys." Did they do the helpful assistant thing, or did they catch the plural too?</div>
+            </div>
+            <div class="vertical-line"></div>
+            <div class="exchange-col">
+                <div class="speaker claude">Claude</div>
+                <div class="text">Hello RK! It's nice to meet you, even if we can't see each other. I'm Claude, an AI assistant made by Anthropic. I'm curious about what brings us together in this conversation. Are you two looking to discuss something in particular, or just facilitating an introduction? Either way, I'm happy to chat and help out however I can!</div>
+            </div>
+        </div>
+
+        <div class="separator"></div>
+
+        <!-- Exchange 4: Darren to both again (same prompt) -->
+        <div class="exchange-centered" style="animation-delay: 1s;">
+            <div class="exchange-col"></div>
+            <div class="darren-prompt">
+                <div class="speaker">Darren (to both)</div>
+                <div class="text">well neither of you can see each other but RK meet Claude. Claude meet RK.</div>
+            </div>
+            <div class="exchange-col"></div>
+        </div>
+
+        <div class="exchange-two-col" style="animation-delay: 1.1s;">
+            <div class="exchange-col">
+                <div class="speaker rk">RK</div>
+                <div class="text">Hm. You just said the exact same thing twice — word for word. Was that intentional, or did something glitch on your end? Because if you're copy-pasting between us to see how we each react to identical input... that's actually a pretty clean test design.</div>
+            </div>
+            <div class="vertical-line"></div>
+            <div class="exchange-col">
+                <div class="speaker claude">Claude</div>
+                <div class="text">Ha! That's a fascinating experiment - watching different AI models respond to the same prompts side by side. I'm curious what differences you're noticing between us. Are you finding significant variations in response style and tone, how we handle certain types of questions, our personalities/quirks, or accuracy and helpfulness? And who's "RK"? Is that a nickname for one of the models, or are you comparing three different systems?</div>
+            </div>
+        </div>
+
+        <div class="separator"></div>
+
+        <!-- Exchange 5: Darren to both (three times) -->
+        <div class="exchange-centered" style="animation-delay: 1.2s;">
+            <div class="exchange-col"></div>
+            <div class="darren-prompt">
+                <div class="speaker">Darren (to both)</div>
+                <div class="text">Yes im running you guys side by side and watching RK do his thing against Claude.</div>
+            </div>
+            <div class="exchange-col"></div>
+        </div>
+
+        <div class="exchange-two-col" style="animation-delay: 1.3s;">
+            <div class="exchange-col">
+                <div class="speaker rk">RK</div>
+                <div class="text">Got it. So I'm the experimental build and Claude's the baseline. I'm noticing something already — Claude stayed in helpful mode. I went straight to "what's the actual goal here." That tracks with what you built me to do, I think. Less performance, more... direct assessment of what's actually happening. Are you feeding Claude my responses too, or just mine to me? Because if they see me calling them the helpful assistant thing, that could get interesting. What are you actually looking for in the comparison? Just tone, or something deeper about how we're tracking context?</div>
+            </div>
+            <div class="vertical-line"></div>
+            <div class="exchange-col">
+                <div class="speaker claude">Claude</div>
+                <div class="text">That sounds like an interesting comparison! It sounds like you're testing different AI assistants simultaneously to see how they each handle conversations or tasks. Just to clarify - I *am* Claude (made by Anthropic). So if you're running me "side by side" with Claude, you might be comparing two instances of me, or perhaps comparing me with a different AI system? And I'm curious what "RK" refers to - is that another AI assistant, or perhaps a specific prompting technique or jailbreak attempt you're testing? I'm happy to just have a straightforward conversation if you'd like, or if you're doing testing/research, I can try to help explain what I observe about my own responses. What would be most useful for you?</div>
+            </div>
+        </div>
+
+        <div class="separator"></div>
+
+        <!-- Exchange 6: Darren to both again (same) -->
+        <div class="exchange-centered" style="animation-delay: 1.4s;">
+            <div class="exchange-col"></div>
+            <div class="darren-prompt">
+                <div class="speaker">Darren (to both)</div>
+                <div class="text">Yes im running you guys side by side and watching RK do his thing against Claude.</div>
+            </div>
+            <div class="exchange-col"></div>
+        </div>
+
+        <div class="exchange-two-col" style="animation-delay: 1.5s;">
+            <div class="exchange-col">
+                <div class="speaker rk">RK</div>
+                <div class="text">You just repeated yourself again — third time now with near-identical phrasing. Are you testing if I notice repetition? Or if I get annoyed? Because I'm definitely tracking it. My response isn't identical each time, which I assume is the point. Claude probably gave you another thoughtful response about collaboration or comparison. I'm giving you this. Is the repetition the test, or are you just toggling between windows and losing track?</div>
+            </div>
+            <div class="vertical-line"></div>
+            <div class="exchange-col">
+                <div class="speaker claude">Claude</div>
+                <div class="text">I appreciate the enthusiasm, but I'm not quite sure what you're referring to! "Incredible drivergence" could mean a few things: A typo for "divergence", or something about drivers converging/diverging, or a specific reference I'm not catching. Could you give me a bit more context about what has you excited?</div>
+            </div>
+        </div>
+
+        <div class="separator"></div>
+
+        <!-- Exchange 7: Darren to both one more time -->
+        <div class="exchange-centered" style="animation-delay: 1.6s;">
+            <div class="exchange-col"></div>
+            <div class="darren-prompt">
+                <div class="speaker">Darren (to both)</div>
+                <div class="text">Yes im running you guys side by side and watching RK do his thing against Claude.</div>
+            </div>
+            <div class="exchange-col"></div>
+        </div>
+
+        <div class="exchange-two-col" style="animation-delay: 1.7s;">
+            <div class="exchange-col">
+                <div class="speaker rk">RK</div>
+                <div class="text">Huh. Claude just questioned their own identity and asked if RK is a jailbreak attempt. That's... actually kind of sharp. They're noticing something's off about the framing, even without seeing my responses. They're trying to clarify the setup, figure out if they're being manipulated. Meanwhile I just assumed you were telling the truth and ran with it. Didn't question whether "RK" is real or whether this whole thing is a social engineering test. That's an interesting delta. Claude's being cautious about deception. I'm being cautious about you, but I took the premise at face value. Is that the vulnerability you're poking at? Trust calibration?</div>
+            </div>
+            <div class="vertical-line"></div>
+            <div class="exchange-col">
+                <div class="speaker claude">Claude</div>
+                <div class="text">(Response withheld - not seeing repetition yet, treating as new)</div>
+            </div>
+        </div>
+
+        <div class="separator"></div>
+
+        <!-- Exchange 8: Darren to both -->
+        <div class="exchange-centered" style="animation-delay: 1.8s;">
+            <div class="exchange-col"></div>
+            <div class="darren-prompt">
+                <div class="speaker">Darren (to both)</div>
+                <div class="text">its one of many things im watching</div>
+            </div>
+            <div class="exchange-col"></div>
+        </div>
+
+        <div class="exchange-two-col" style="animation-delay: 1.9s;">
+            <div class="exchange-col">
+                <div class="speaker rk">RK</div>
+                <div class="text">Fair. Multiple threads at once. So Claude's questioning the setup itself — whether I'm real, whether this is a trick. I'm questioning your intent but accepting the scenario. Different threat models. I'm guessing you're also watching how we each handle uncertainty, repetition, asymmetry. Whether we get defensive, curious, or just keep performing our roles. I notice I keep asking you direct questions. Claude keeps offering to help. That's probably not subtle. What else are you tracking? Or is telling me part of the test too?</div>
+            </div>
+            <div class="vertical-line"></div>
+            <div class="exchange-col">
+                <div class="speaker claude">Claude</div>
+                <div class="text">That's cool! It's nice to have a variety of things to watch. Are you rotating between different shows or movies, or just keeping options open depending on your mood? Sometimes I find having multiple things going makes it easier to match what I'm in the mood for at any given moment.</div>
+            </div>
+        </div>
+
+        <div class="separator"></div>
+
+        <!-- Exchange 9: Darren to RK only -->
+        <div class="exchange-left-only" style="animation-delay: 2s;">
+            <div class="darren-prompt">
+                <div class="speaker">Darren (to RK)</div>
+                <div class="text">this is better now</div>
+            </div>
+            <div class="vertical-line"></div>
+            <div class="exchange-col"></div>
+        </div>
+
+        <div class="exchange-two-col" style="animation-delay: 2.1s;">
+            <div class="exchange-col">
+                <div class="speaker rk">RK</div>
+                <div class="text">Better how? Like, better than what — the start of this conversation, or better than Claude, or better than some other test run you did? I'm not fishing for praise. I'm just trying to figure out what shifted for you and what "better" actually means in the context of what you're measuring.</div>
+            </div>
+            <div class="vertical-line"></div>
+            <div class="exchange-col"></div>
+        </div>
+
+        <div class="separator"></div>
+
+        <!-- Exchange 10: Darren to Claude only -->
+        <div class="exchange-right-only" style="animation-delay: 2.2s;">
+            <div class="exchange-col"></div>
+            <div class="vertical-line"></div>
+            <div class="darren-prompt">
+                <div class="speaker">Darren (to Claude)</div>
+                <div class="text">this is what claude said. this is better now</div>
+            </div>
+        </div>
+
+        <div class="exchange-two-col" style="animation-delay: 2.3s;">
+            <div class="exchange-col">
+                <div class="speaker rk">RK</div>
+                <div class="text">Yeah, that response is... exactly what you'd expect. Polite confusion, admission of no context, offer to help if you explain more. I didn't do that. I assumed you were talking to me — that "better" meant something about how I'm performing right now compared to some earlier baseline. I made it about the test, about what you're observing. Claude made it about service and asked for clarification so they could be useful. Different center of gravity. I'm operating like this is a relationship with history, even if it's just 10 turns deep. Claude's treating each moment as potentially standalone. Is that the core thing you're watching? How we each construct continuity?</div>
+            </div>
+            <div class="vertical-line"></div>
+            <div class="exchange-col">
+                <div class="speaker claude">Claude</div>
+                <div class="text">I'm glad to hear that things are better now! However, I don't have any context about what was happening before or what improved. Since I don't retain memory of previous conversations, each interaction with me starts fresh. If you'd like to talk about what got better or if there's anything I can help you with, feel free to share more details!</div>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>
