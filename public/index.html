@@ -584,15 +584,18 @@
       if (flagLog.length > 50) flagLog.shift();
     }
 
-    async function sendMessage() {
+   async function sendMessage() {
       const message = userInput.value.trim();
       if (!message) return;
 
       addMessage('user', message);
-      conversation.push({ role: 'user', content: message });
+      addMessage('agent', 'BRUNEL is offline for maintenance. Security updates in progress. We\'ll be back soon.');
+      
       userInput.value = '';
       userInput.style.height = '40px';
-      sendBtn.disabled = true;
+      sendBtn.disabled = false;
+      userInput.focus();
+}
 
       try {
         const response = await fetch('/api/chat', {
